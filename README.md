@@ -30,6 +30,16 @@
 </p>
 <p align="center"><sub>点击图片查看完整原图</sub></p>
 
+<p align="center">
+  <strong>Test1 代表样本</strong>
+</p>
+<p align="center">
+  <a href="assets/samples/test1/sample_025.jpg">
+    <img src="assets/samples/test1/sample_025.jpg" alt="Test1 侨批代表样本 sample_025" width="430">
+  </a>
+</p>
+<p align="center"><sub><a href="assets/samples/test1">查看 Test1 全部 10 张测试图片</a></sub></p>
+
 <br>
 
 <p align="center">
@@ -42,7 +52,17 @@
 </p>
 <p align="center"><sub>点击图片查看完整原图</sub></p>
 
-每组测试中的三条路线采用相同 Prompt 与 Schema，结果仅用于工程路线比较，不宣称统计学结论。截图中的 `0 · 免费额度` 是实验窗口的计费展示，不代表 Paddle API 实际计算量或 Token usage 为 0；Codex Native 数值是图片输入增量代理，不是官方 `image_tokens`。
+<p align="center">
+  <strong>Test2 代表样本</strong>
+</p>
+<p align="center">
+  <a href="assets/examples/test2-page-13-cropped.png">
+    <img src="assets/examples/test2-page-13-cropped.png" alt="Test2 复杂报刊代表样本 page-13" width="430">
+  </a>
+</p>
+<p align="center"><sub><a href="assets/samples/test2">查看 Test2 全部 20 张测试图片</a> · 代表图仅裁去正文下方的非正文提示行</sub></p>
+
+两组测试素材均已获得组织授权公开。每组测试中的三条路线采用相同 Prompt 与 Schema，结果仅用于工程路线比较，不宣称统计学结论。截图中的 `0 · 免费额度` 是实验窗口的计费展示，不代表 Paddle API 实际计算量或 Token usage 为 0；Codex Native 数值是图片输入增量代理，不是官方 `image_tokens`。
 
 ## 为什么需要 Duhai Vision
 
@@ -218,7 +238,11 @@ duhai-vision/
 ├─ uninstall.ps1
 ├─ assets/
 │  ├─ experiment-results.png
-│  └─ test2-results.png
+│  ├─ test2-results.png
+│  ├─ examples/test2-page-13-cropped.png
+│  └─ samples/
+│     ├─ test1/（10 张）
+│     └─ test2/（20 张）
 └─ skills/duhai-vision/
    ├─ SKILL.md
    ├─ agents/openai.yaml
