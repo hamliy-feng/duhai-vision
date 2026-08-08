@@ -1,0 +1,8 @@
+.env
+.env.*
+.agent_index/
+outputs/
+__pycache__/
+*.py[cod]
+.DS_Store
+.tmp-install/
