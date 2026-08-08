@@ -1,6 +1,6 @@
 <div align="center">
   <h1>👁️ Duhai Vision</h1>
-  <p><strong>给 Codex 换一双可控、可审计的眼睛。</strong></p>
+  <p><strong>给 Codex 换一双免费、可替换且不影响视觉质量的眼睛。</strong></p>
   <p>用 PaddleOCR-VL 或 Qwen 替换 Codex 内置视觉输入；Codex 继续负责推理、编排、验证和最终回答。</p>
   <p>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-111111.svg" alt="License: MIT"></a>
@@ -96,6 +96,17 @@ Expand-Archive .\duhai-vision.zip -DestinationPath .
 cd .\duhai-vision-main
 ```
 
+### 在你使用前，先知道这些
+
+| 项目 | 默认行为 |
+|---|---|
+| 默认路线 | PaddleOCR-VL 1.6，优先处理文档、OCR、表格、公式、印章与版面 |
+| 通用视觉 | 配置 Qwen 后，UI、照片、商品、计数和开放式语义可切换到 Qwen3-VL-Plus |
+| 全局范围 | 技能安装到 `~/.agents/skills`，路由规则写入 `~/.codex/AGENTS.md`，重启 Codex 后生效 |
+| 调用预算 | 每个视觉任务默认最多 2 次外部调用：一次主提取，一次重试、裁剪或定向验证 |
+| 隐私 | 远程提供方会收到图片；敏感材料应先脱敏，或不要走远程路线 |
+| 诊断 | `doctor.py` 会检查默认路线、依赖、Key、Node、全局规则与技能安装状态 |
+
 ### 3. 先检查，再显式安装
 
 ```powershell
@@ -134,17 +145,6 @@ python .\skills\duhai-vision\scripts\doctor.py
 | 仅预览 | `powershell -File .\install.ps1 -Apply -InstallDependencies -DryRun` | 预览目标路径、依赖与环境配置，不做任何写入 |
 
 自动化环境可预先设置 `PADDLEOCR_ACCESS_TOKEN`，并使用 `-Apply -NoCredentialPrompt`。当前一键全局安装器面向 Windows PowerShell；Skill 内的 Python 和 Node 执行器可独立复用。
-
-### 在你使用前，先知道这些
-
-| 项目 | 默认行为 |
-|---|---|
-| 默认路线 | PaddleOCR-VL 1.6，优先处理文档、OCR、表格、公式、印章与版面 |
-| 通用视觉 | 配置 Qwen 后，UI、照片、商品、计数和开放式语义可切换到 Qwen3-VL-Plus |
-| 全局范围 | 技能安装到 `~/.agents/skills`，路由规则写入 `~/.codex/AGENTS.md`，重启 Codex 后生效 |
-| 调用预算 | 每个视觉任务默认最多 2 次外部调用：一次主提取，一次重试、裁剪或定向验证 |
-| 隐私 | 远程提供方会收到图片；敏感材料应先脱敏，或不要走远程路线 |
-| 诊断 | `doctor.py` 会检查默认路线、依赖、Key、Node、全局规则与技能安装状态 |
 
 ## 路线选择
 
