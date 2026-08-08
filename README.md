@@ -1,18 +1,48 @@
-# 👁️ Duhai Vision
+<div align="center">
+  <h1>👁️ Duhai Vision</h1>
+  <p><strong>给 Codex 换一双可控、可审计的眼睛。</strong></p>
+  <p>用 PaddleOCR-VL 或 Qwen 替换 Codex 内置视觉输入；Codex 继续负责推理、编排、验证和最终回答。</p>
+  <p>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-111111.svg" alt="License: MIT"></a>
+    <a href="skills/duhai-vision/SKILL.md"><img src="https://img.shields.io/badge/Codex-Skill-087f6b.svg" alt="Codex Skill"></a>
+    <a href="https://aistudio.baidu.com/paddleocr/task"><img src="https://img.shields.io/badge/Default-PaddleOCR--VL-087f6b.svg" alt="Default: PaddleOCR-VL"></a>
+  </p>
+  <p>
+    <a href="#测试结果">测试结果</a> ·
+    <a href="#快速安装">快速安装</a> ·
+    <a href="#路线选择">路线选择</a> ·
+    <a href="#使用方式">使用方式</a> ·
+    <a href="#卸载">卸载</a> ·
+    <a href="#安全">安全</a>
+  </p>
+  <p>Duhai Vision 是一个 Codex 全局视觉替代技能。图片先交给外部视觉服务提取结构化观察，Codex 再基于文本结果完成判断。默认走 PaddleOCR-VL；UI、照片和通用视觉语义更适合 Qwen 时，技能会先说明原因再切换。</p>
+</div>
 
-> 给 Codex 换一双可控、可审计的眼睛。
+## 测试结果
 
-用 PaddleOCR-VL 或 Qwen 替换 Codex 内置视觉输入；Codex 继续负责推理、编排、验证和最终回答。
+<p align="center">
+  <strong>Test1 · 侨批</strong>
+</p>
+<p align="center">
+  <a href="assets/experiment-results.png">
+    <img src="assets/experiment-results.png" alt="Test1：Duhai Vision 与 Codex Native 侨批实验结果" width="720">
+  </a>
+</p>
+<p align="center"><sub>点击图片查看完整原图</sub></p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-111111.svg)](LICENSE)
-[![Codex Skill](https://img.shields.io/badge/Codex-Skill-087f6b.svg)](skills/duhai-vision/SKILL.md)
-[![Default: PaddleOCR-VL](https://img.shields.io/badge/Default-PaddleOCR--VL-087f6b.svg)](https://aistudio.baidu.com/paddleocr/task)
+<br>
 
-[快速安装](#快速安装) · [路线选择](#路线选择) · [使用方式](#使用方式) · [实验结果](#实验结果) · [卸载](#卸载) · [安全](#安全)
+<p align="center">
+  <strong>Test2 · 复杂报刊</strong>
+</p>
+<p align="center">
+  <a href="assets/test2-results.png">
+    <img src="assets/test2-results.png" alt="Test2：Duhai Vision 与 Codex Native 复杂报刊实验结果" width="720">
+  </a>
+</p>
+<p align="center"><sub>点击图片查看完整原图</sub></p>
 
-Duhai Vision 是一个 Codex 全局视觉替代技能。图片先交给外部视觉服务提取结构化观察，Codex 再基于文本结果完成判断。默认走 PaddleOCR-VL；UI、照片和通用视觉语义更适合 Qwen 时，技能会先说明原因再切换。
-
-![Duhai Vision 与 Codex Native 实验结果](assets/experiment-results.png)
+每组测试中的三条路线采用相同 Prompt 与 Schema，结果仅用于工程路线比较，不宣称统计学结论。截图中的 `0 · 免费额度` 是实验窗口的计费展示，不代表 Paddle API 实际计算量或 Token usage 为 0；Codex Native 数值是图片输入增量代理，不是官方 `image_tokens`。
 
 ## 为什么需要 Duhai Vision
 
@@ -179,18 +209,6 @@ Codex 验证、推理并完成最终回答
 
 路由选择、额度披露、调用上限和回退条件写在 Skill 与全局规则里。模型输出只作为观察；重要数字、姓名、日期、表格关系和警告仍应交叉验证。
 
-## 实验结果
-
-同一批素材、同 Prompt、同 Schema 的 Test1（30 页）描述性结果：
-
-| 路线 | 平均质量 | 视觉 Token 可观测值 | 当期计费 | 平均耗时 |
-|---|---:|---:|---:|---:|
-| Duhai VLM | 86.9% | 49,536 | 见实验账本 | 135.8 s |
-| Duhai OCR-VL API | 75.1% | N/A（SDK 未暴露） | 0（当期免费额度） | 142.9 s |
-| Codex Native | 82.5% | 约 61,620（增量代理） | N/A | 173.6 s |
-
-说明：截图中的 `0 · 免费额度` 是该实验窗口的计费展示，不代表 Paddle API 实际计算量或 Token usage 为 0。Codex Native 数值来自 B1/V/B2 前后夹心基线，是图片输入增量代理，不是官方 `image_tokens`。实验分组不满足确认性独立来源要求，因此这些结果用于工程路线比较，不宣称统计学非劣结论。
-
 ## 仓库结构
 
 ```text
@@ -198,7 +216,9 @@ duhai-vision/
 ├─ README.md
 ├─ install.ps1
 ├─ uninstall.ps1
-├─ assets/experiment-results.png
+├─ assets/
+│  ├─ experiment-results.png
+│  └─ test2-results.png
 └─ skills/duhai-vision/
    ├─ SKILL.md
    ├─ agents/openai.yaml
