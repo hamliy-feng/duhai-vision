@@ -1,24 +1,39 @@
-# Duhai Vision
+# 👁️ Duhai Vision
 
-> 用 PaddleOCR-VL 或 Qwen 替换 Codex 内置视觉输入，让 Codex 继续负责推理、编排和最终回答。
+> 给 Codex 换一双可控、可审计的眼睛。
+
+用 PaddleOCR-VL 或 Qwen 替换 Codex 内置视觉输入；Codex 继续负责推理、编排、验证和最终回答。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-111111.svg)](LICENSE)
 [![Codex Skill](https://img.shields.io/badge/Codex-Skill-087f6b.svg)](skills/duhai-vision/SKILL.md)
 [![Default: PaddleOCR-VL](https://img.shields.io/badge/Default-PaddleOCR--VL-087f6b.svg)](https://aistudio.baidu.com/paddleocr/task)
 
+[快速安装](#快速安装) · [路线选择](#路线选择) · [使用方式](#使用方式) · [实验结果](#实验结果) · [安全](#安全)
+
 Duhai Vision 是一个 Codex 全局视觉替代技能。图片先交给外部视觉服务提取结构化观察，Codex 再基于文本结果完成判断。默认走 PaddleOCR-VL；UI、照片和通用视觉语义更适合 Qwen 时，技能会先说明原因再切换。
 
 ![Duhai Vision 与 Codex Native 实验结果](assets/experiment-results.png)
 
-## 为什么使用
+## 为什么需要 Duhai Vision
+
+Codex 能看图，但在批量 OCR、长文档和可重复实验里，常见问题是：不知道该用哪条视觉路线、额度边界没有提前说明、Token 口径混在一起、失败后悄悄换路。Duhai Vision 把这些决策固化成一个全局能力层：
 
 - **全局替换**：安装后，Codex 遇到截图、图表、文档、OCR 或图片任务时优先调用 Duhai Vision。
 - **先说明再调用**：每个任务先简要说明任务类型、推荐路线、限额与 Token 可观测性。
 - **Paddle 默认**：适合古籍、侨批、表格、公式、印章、版面和长文档。
 - **Qwen 后备**：适合 UI、照片、商品、细粒度语义和开放式视觉理解。
 - **可审计**：保留提供方、模型、耗时、页数和可获得的 Token 数据，不把未知值写成 0。
+- **有边界的回退**：外部路线不可用或用户明确指定时，才使用 Codex Native，并说明原因。
 
-## 30 秒安装
+## 快速安装
+
+也可以直接把这句话交给 Codex：
+
+```text
+请安装并全局启用 Duhai Vision：
+https://github.com/hamliy-feng/duhai-vision
+按仓库 README 完成 Paddle Access Token、依赖和 doctor 检查。
+```
 
 ### 1. 获取 Paddle Access Token
 
@@ -49,6 +64,17 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 `
 ```powershell
 python .\skills\duhai-vision\scripts\doctor.py
 ```
+
+### 在你使用前，先知道这些
+
+| 项目 | 默认行为 |
+|---|---|
+| 默认路线 | PaddleOCR-VL 1.6，优先处理文档、OCR、表格、公式、印章与版面 |
+| 通用视觉 | 配置 Qwen 后，UI、照片、商品、计数和开放式语义可切换到 Qwen3-VL-Plus |
+| 全局范围 | 技能安装到 `~/.agents/skills`，路由规则写入 `~/.codex/AGENTS.md`，重启 Codex 后生效 |
+| 调用预算 | 每个视觉任务默认最多 2 次外部调用：一次主提取，一次重试、裁剪或定向验证 |
+| 隐私 | 远程提供方会收到图片；敏感材料应先脱敏，或不要走远程路线 |
+| 诊断 | `doctor.py` 会检查默认路线、依赖、Key、Node、全局规则与技能安装状态 |
 
 ## 路线选择
 
@@ -96,6 +122,22 @@ python .\skills\duhai-vision\scripts\paddle_extract.py `
   --out ".agent_index\page-001.json"
 ```
 
+## 设计理念
+
+Duhai Vision 是视觉观察层，不是最终真相，也不是另一个聊天机器人：
+
+```text
+图片 / PDF / 截图
+        ↓
+PaddleOCR-VL（默认）或 Qwen（通用视觉）
+        ↓
+结构化观察 + 不确定项 + 可观测 usage
+        ↓
+Codex 验证、推理并完成最终回答
+```
+
+路由选择、额度披露、调用上限和回退条件写在 Skill 与全局规则里。模型输出只作为观察；重要数字、姓名、日期、表格关系和警告仍应交叉验证。
+
 ## 实验结果
 
 同一批素材、同 Prompt、同 Schema 的 Test1（30 页）描述性结果：
@@ -127,6 +169,8 @@ duhai-vision/
 - 所有凭据只从环境变量读取。
 - `.env`、输出目录和本地索引默认不进入 Git。
 - 远程视觉服务会接收图片内容；涉及身份证件、地址、电话或未公开档案时，先脱敏或改用本地方案。
+
+如果这个项目对你有用，欢迎 Star；遇到路线失效、额度变化或解析问题，请直接提交 Issue。
 
 ## License
 
