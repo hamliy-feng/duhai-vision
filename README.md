@@ -1,7 +1,7 @@
 <div align="center">
   <h1>👁️ Duhai Vision</h1>
   <p><strong>给 Codex 换一双免费、可替换且不影响视觉质量的眼睛。</strong></p>
-  <p>用 PaddleOCR-VL 或 Qwen 替换 Codex 内置视觉输入；Codex 继续负责推理、编排、验证和最终回答。</p>
+  <p>🧩 Duhai Vision 是视觉模型适配器：Codex 将图片任务组织成问题式 JSON，等待视觉能力返回结构化结果后再继续分析。从调用形态上看，视觉可以作为独立能力层，底层可能由插件或 <code>image2</code> 类图片识别入口承载；这个 Skill 负责把图片识别切换到其他可替换路线。当前文档与 OCR 默认优先使用 PaddleOCR-VL，AI Studio 当前为每位用户、每个模型提供每天 3000 页免费解析额度。</p>
   <p>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-111111.svg" alt="License: MIT"></a>
     <a href="skills/duhai-vision/SKILL.md"><img src="https://img.shields.io/badge/Codex-Skill-087f6b.svg" alt="Codex Skill"></a>
@@ -17,6 +17,13 @@
   </p>
   <p>Duhai Vision 是一个 Codex 全局视觉替代技能。图片先交给外部视觉服务提取结构化观察，Codex 再基于文本结果完成判断。默认走 PaddleOCR-VL；UI、照片和通用视觉语义更适合 Qwen 时，技能会先说明原因再切换。</p>
 </div>
+
+- 🧩 “不要使用固定的图片识别入口” → **切换为可替换的视觉模型适配器**
+- 📤 “图片任务怎样交给视觉模型” → **按问题式 JSON 发送并等待结构化回调**
+- 🔁 “视觉结果返回后怎么办” → **交回 Codex 继续推理、验证和回答**
+- 📄 “帮我读文档、表格、古籍或报刊” → **默认优先 PaddleOCR-VL**
+- 🖼️ “帮我看 UI、照片、商品或开放场景” → **按任务切换 Qwen**
+- 🎁 “每天有多少免费额度” → **每位用户、每个模型当前 3000 页，以[官方规则](https://ai.baidu.com/ai-doc/AISTUDIO/Xmjclapam)为准**
 
 ## 测试结果
 
