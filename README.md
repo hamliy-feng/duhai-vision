@@ -8,7 +8,7 @@
 [![Codex Skill](https://img.shields.io/badge/Codex-Skill-087f6b.svg)](skills/duhai-vision/SKILL.md)
 [![Default: PaddleOCR-VL](https://img.shields.io/badge/Default-PaddleOCR--VL-087f6b.svg)](https://aistudio.baidu.com/paddleocr/task)
 
-[快速安装](#快速安装) · [路线选择](#路线选择) · [使用方式](#使用方式) · [实验结果](#实验结果) · [安全](#安全)
+[快速安装](#快速安装) · [路线选择](#路线选择) · [使用方式](#使用方式) · [实验结果](#实验结果) · [卸载](#卸载) · [安全](#安全)
 
 Duhai Vision 是一个 Codex 全局视觉替代技能。图片先交给外部视觉服务提取结构化观察，Codex 再基于文本结果完成判断。默认走 PaddleOCR-VL；UI、照片和通用视觉语义更适合 Qwen 时，技能会先说明原因再切换。
 
@@ -41,12 +41,40 @@ https://github.com/hamliy-feng/duhai-vision
 2. 打开 [AI Studio Access Token 页面](https://aistudio.baidu.com/account/accessToken)，创建或复制 Access Token；也可从 [PaddleOCR 官方 API 任务页](https://aistudio.baidu.com/paddleocr/task)的调用示例进入。
 3. 该值在本技能中保存为环境变量 `PADDLEOCR_ACCESS_TOKEN`，不要写入仓库或提示词。
 
-### 2. 安装并启用全局替换
+### 2. 命令行下载
+
+使用 GitHub CLI：
+
+```powershell
+gh repo clone hamliy-feng/duhai-vision
+cd duhai-vision
+```
+
+或使用 Git：
 
 ```powershell
 git clone https://github.com/hamliy-feng/duhai-vision.git
 cd duhai-vision
+```
+
+不使用 Git 时也可下载源码压缩包：
+
+```powershell
+curl.exe -L https://github.com/hamliy-feng/duhai-vision/archive/refs/heads/main.zip `
+  -o duhai-vision.zip
+Expand-Archive .\duhai-vision.zip -DestinationPath .
+cd .\duhai-vision-main
+```
+
+### 3. 先检查，再显式安装
+
+```powershell
+# 默认只读检查：不会安装依赖、复制 Skill、写全局规则或保存 Key
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+
+# 确认后再安装 Skill、依赖并启用 Codex 全局视觉替换
 powershell -ExecutionPolicy Bypass -File .\install.ps1 `
+  -Apply `
   -InstallDependencies
 ```
 
@@ -64,6 +92,18 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 `
 ```powershell
 python .\skills\duhai-vision\scripts\doctor.py
 ```
+
+### 安装方式
+
+| 方式 | 命令 | 适合场景 |
+|---|---|---|
+| 默认安全检查 | `powershell -File .\install.ps1` | 所有环境；只读检查并列出 Skill、规则、运行时与 Key 状态 |
+| 显式安装 | `powershell -File .\install.ps1 -Apply` | 已有 `paddleocr` 依赖，只安装 Skill 与全局规则 |
+| 显式安装依赖 | `powershell -File .\install.ps1 -Apply -InstallDependencies` | 明确允许通过 pip 安装或更新依赖 |
+| 兼容安全参数 | `powershell -File .\install.ps1 -Safe` | 与默认只读检查相同 |
+| 仅预览 | `powershell -File .\install.ps1 -Apply -InstallDependencies -DryRun` | 预览目标路径、依赖与环境配置，不做任何写入 |
+
+自动化环境可预先设置 `PADDLEOCR_ACCESS_TOKEN`，并使用 `-Apply -NoCredentialPrompt`。当前一键全局安装器面向 Windows PowerShell；Skill 内的 Python 和 Node 执行器可独立复用。
 
 ### 在你使用前，先知道这些
 
@@ -90,13 +130,14 @@ Paddle 官方当前公开限制包括：每用户、每模型每天 3000 页，�
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\install.ps1 `
+  -Apply `
   -ConfigureQwen
 ```
 
 安装器会以隐藏输入方式询问 DashScope API Key，默认提供方仍保持 Paddle。Duhai Vision 会在 UI、照片和通用视觉任务中推荐 Qwen，也可显式设置：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\install.ps1 -Provider qwen
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -Apply -Provider qwen
 ```
 
 ## 使用方式
@@ -156,6 +197,7 @@ Codex 验证、推理并完成最终回答
 duhai-vision/
 ├─ README.md
 ├─ install.ps1
+├─ uninstall.ps1
 ├─ assets/experiment-results.png
 └─ skills/duhai-vision/
    ├─ SKILL.md
@@ -170,7 +212,44 @@ duhai-vision/
 - `.env`、输出目录和本地索引默认不进入 Git。
 - 远程视觉服务会接收图片内容；涉及身份证件、地址、电话或未公开档案时，先脱敏或改用本地方案。
 
-如果这个项目对你有用，欢迎 Star；遇到路线失效、额度变化或解析问题，请直接提交 Issue。
+## 卸载
+
+先预览，不做任何删除：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\uninstall.ps1 -DryRun
+```
+
+移除已安装 Skill 和 Duhai Vision 受管全局规则，默认保留提供方 Key：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
+
+# 与默认行为相同：明确保留 Key，便于之后重装
+powershell -ExecutionPolicy Bypass -File .\uninstall.ps1 -KeepConfig
+```
+
+只有确定这些环境变量没有被其他工具共用时，才同时删除安装器管理的配置：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\uninstall.ps1 -RemoveCredentials
+```
+
+卸载器不会删除仓库目录，也不会自动卸载可能被其他项目共用的 `paddleocr` 包。如果确认不再使用，可另行执行：
+
+```powershell
+python -m pip uninstall paddleocr
+```
+
+## ⭐ 为什么值得 Star
+
+这个技能来自真实的 Duhai Vision / Codex Native 对照实验，也会继续用于日常视觉工作流。
+
+- PaddleOCR、Qwen、Codex 或官方额度发生变化时，会持续更新路由和说明。
+- 新的文档、UI、图表和批量图片场景会逐步补充到技能与验证流程。
+- 路线失效、额度变化或解析问题都欢迎直接提交 Issue。
+
+Star 一下，下次需要给 Codex 更换视觉路线时能直接找到。⭐
 
 ## License
 
