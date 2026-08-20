@@ -6,3 +6,6 @@ __pycache__/
 *.py[cod]
 .DS_Store
 .tmp-install/
+node_modules/
+pnpm-debug.log*
+npm-debug.log*

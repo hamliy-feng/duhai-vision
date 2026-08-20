@@ -1,9 +1,10 @@
 <div align="center">
   <h1>👁️ Duhai Vision</h1>
-  <p><strong>给 Codex 换一双免费、可替换且不影响视觉质量的眼睛。</strong></p>
+  <p><strong>给 Codex 与 DSH 换一双免费、可替换且不影响视觉质量的眼睛。</strong></p>
   <p>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-111111.svg" alt="License: MIT"></a>
     <a href="skills/duhai-vision/SKILL.md"><img src="https://img.shields.io/badge/Codex-Skill-087f6b.svg" alt="Codex Skill"></a>
+    <a href="cordis.patch.yml"><img src="https://img.shields.io/badge/DSH-Plugin-087f6b.svg" alt="DSH Plugin"></a>
     <a href="https://aistudio.baidu.com/paddleocr/task"><img src="https://img.shields.io/badge/Default-PaddleOCR--VL-087f6b.svg" alt="Default: PaddleOCR-VL"></a>
   </p>
   <p>
@@ -14,12 +15,12 @@
     <a href="#卸载">卸载</a> ·
     <a href="#安全">安全</a>
   </p>
-  <p>🧩 Duhai Vision 是视觉模型适配器：Codex 将图片任务组织成问题式 JSON，等待视觉能力返回结构化结果后再继续分析。从调用形态上看，视觉可以作为独立能力层，底层可能由插件或 <code>image2</code> 类图片识别入口承载；这个 Skill 负责把图片识别切换到其他可替换路线。当前文档与 OCR 默认优先使用 PaddleOCR-VL，AI Studio 当前为每位用户、每个模型提供每天 3000 页免费解析额度。</p>
+  <p>🧩 Duhai Vision 是视觉模型适配器：Codex 或 DSH 将图片任务组织成问题式 JSON，等待视觉能力返回结构化结果后再继续分析。Codex 通过 Skill 启用全局视觉路由，DSH 通过 <code>duhai_vision</code> 工具调用同一套 PaddleOCR-VL / Qwen 执行器。当前文档与 OCR 默认优先使用 PaddleOCR-VL，AI Studio 当前为每位用户、每个模型提供每天 3000 页免费解析额度。</p>
 </div>
 
 - 🧩 “不要使用固定的图片识别入口” → **切换为可替换的视觉模型适配器**
 - 📤 “图片任务怎样交给视觉模型” → **按问题式 JSON 发送并等待结构化回调**
-- 🔁 “视觉结果返回后怎么办” → **交回 Codex 继续推理、验证和回答**
+- 🔁 “视觉结果返回后怎么办” → **交回 Codex 或 DSH 继续推理、验证和回答**
 - 📄 “帮我读文档、表格、古籍或报刊” → **默认优先 PaddleOCR-VL**
 - 🖼️ “帮我看 UI、照片、商品或开放场景” → **按任务切换 Qwen**
 - 🎁 “每天有多少免费额度” → **每位用户、每个模型当前 3000 页，以[官方规则](https://ai.baidu.com/ai-doc/AISTUDIO/Xmjclapam)为准**
@@ -72,9 +73,9 @@
 
 ## 为什么需要 Duhai Vision
 
-Codex 能看图，但在批量 OCR、长文档和可重复实验里，常见问题是：不知道该用哪条视觉路线、额度边界没有提前说明、Token 口径混在一起、失败后悄悄换路。Duhai Vision 把这些决策固化成一个全局能力层：
+Codex 与 DSH 在批量 OCR、长文档和可重复视觉任务里，需要明确路线选择、额度边界、Token 口径和失败处理。Duhai Vision 把这些决策固化成统一能力层：
 
-- **全局替换**：安装后，Codex 遇到截图、图表、文档、OCR 或图片任务时优先调用 Duhai Vision。
+- **双端适配**：Codex 使用全局 Skill 路由；DSH 使用模型可调用的 `duhai_vision` 工具。
 - **先说明再调用**：每个任务先简要说明任务类型、推荐路线、限额与 Token 可观测性。
 - **Paddle 默认**：适合古籍、侨批、表格、公式、印章、版面和长文档。
 - **Qwen 后备**：适合 UI、照片、商品、细粒度语义和开放式视觉理解。
@@ -82,6 +83,69 @@ Codex 能看图，但在批量 OCR、长文档和可重复实验里，常见问�
 - **有边界的回退**：外部路线不可用或用户明确指定时，才使用 Codex Native，并说明原因。
 
 ## 快速安装
+
+### DSH
+
+安装 PaddleOCR-VL 运行依赖：
+
+```powershell
+python -m pip install "paddleocr>=3.4,<4"
+```
+
+配置 Paddle Access Token：
+
+```powershell
+$env:PADDLEOCR_ACCESS_TOKEN = "<你的 Access Token>"
+[Environment]::SetEnvironmentVariable(
+  "PADDLEOCR_ACCESS_TOKEN",
+  "<你的 Access Token>",
+  "User"
+)
+```
+
+可选配置 Qwen：
+
+```powershell
+$env:VLM_API_KEY = "<你的 DashScope API Key>"
+[Environment]::SetEnvironmentVariable(
+  "VLM_API_KEY",
+  "<你的 DashScope API Key>",
+  "User"
+)
+```
+
+将插件安装到 DSH Web profile：
+
+```powershell
+dsh plugin --profile web add github:hamliy-feng/duhai-vision
+dsh web
+```
+
+Linux 与 macOS：
+
+```bash
+python3 -m pip install "paddleocr>=3.4,<4"
+export PADDLEOCR_ACCESS_TOKEN="<你的 Access Token>"
+# 可选：export VLM_API_KEY="<你的 DashScope API Key>"
+dsh plugin --profile web add github:hamliy-feng/duhai-vision
+dsh web
+```
+
+安装后，DSH 会获得模型工具 `duhai_vision`。工具接收本地图片路径、视觉问题和可选提供方；`auto` 默认使用 PaddleOCR-VL，UI、照片、商品、计数和开放场景自动选择 Qwen。
+
+从本地仓库安装：
+
+```powershell
+dsh plugin --profile web add .
+```
+
+检查 Bundle 已进入 Web profile：
+
+```powershell
+dsh --profile web --dump-config
+```
+
+### Codex
 
 也可以直接把这句话交给 Codex：
 
@@ -91,13 +155,13 @@ https://github.com/hamliy-feng/duhai-vision
 按仓库 README 完成 Paddle Access Token、依赖和 doctor 检查。
 ```
 
-### 1. 获取 Paddle Access Token
+#### 1. 获取 Paddle Access Token
 
 1. 注册或登录 [百度 AI Studio](https://aistudio.baidu.com/)。
 2. 打开 [AI Studio Access Token 页面](https://aistudio.baidu.com/account/accessToken)，创建或复制 Access Token；也可从 [PaddleOCR 官方 API 任务页](https://aistudio.baidu.com/paddleocr/task)的调用示例进入。
 3. 该值在本技能中保存为环境变量 `PADDLEOCR_ACCESS_TOKEN`，不要写入仓库或提示词。
 
-### 2. 命令行下载
+#### 2. 命令行下载
 
 使用 GitHub CLI：
 
@@ -122,7 +186,7 @@ Expand-Archive .\duhai-vision.zip -DestinationPath .
 cd .\duhai-vision-main
 ```
 
-### 在你使用前，先知道这些
+#### 在你使用前，先知道这些
 
 | 项目 | 默认行为 |
 |---|---|
@@ -133,7 +197,7 @@ cd .\duhai-vision-main
 | 隐私 | 远程提供方会收到图片；敏感材料应先脱敏，或不要走远程路线 |
 | 诊断 | `doctor.py` 会检查默认路线、依赖、Key、Node、全局规则与技能安装状态 |
 
-### 3. 先检查，再显式安装
+#### 3. 先检查，再显式安装
 
 ```powershell
 # 默认只读检查：不会安装依赖、复制 Skill、写全局规则或保存 Key
@@ -160,7 +224,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 `
 python .\skills\duhai-vision\scripts\doctor.py
 ```
 
-### 安装方式
+#### 安装方式
 
 | 方式 | 命令 | 适合场景 |
 |---|---|---|
@@ -198,17 +262,33 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 -Apply -Provider qwen
 
 ## 使用方式
 
-安装完成后，像平常一样把图片交给 Codex：
+安装完成后，像平常一样把图片交给 Codex，或告诉 DSH 图片路径：
 
 ```text
 请转录这页侨批，保留繁体字、印章、不可读位置和推断依据。
+```
+
+DSH 示例：
+
+```text
+使用 Duhai Vision 读取 C:\资料\page-001.jpg，转录正文、印章和表格，标记不确定项。
+```
+
+DSH 会调用：
+
+```json
+{
+  "image": "C:\\资料\\page-001.jpg",
+  "question": "转录正文、印章和表格，标记不确定项",
+  "provider": "auto"
+}
 ```
 
 技能应先给出类似提示：
 
 ```text
 任务属于文档 OCR 与版面提取，默认使用 PaddleOCR-VL；当前社区额度按页计，
-SDK 不返回 Token usage。本次结果将由 Codex 继续结构化并标记不确定项。
+SDK 不返回 Token usage。本次结果将由 Codex 或 DSH 继续结构化并标记不确定项。
 ```
 
 需要手动调用时：
@@ -230,7 +310,7 @@ PaddleOCR-VL（默认）或 Qwen（通用视觉）
         ↓
 结构化观察 + 不确定项 + 可观测 usage
         ↓
-Codex 验证、推理并完成最终回答
+Codex / DSH 验证、推理并完成最终回答
 ```
 
 路由选择、额度披露、调用上限和回退条件写在 Skill 与全局规则里。模型输出只作为观察；重要数字、姓名、日期、表格关系和警告仍应交叉验证。
@@ -240,6 +320,11 @@ Codex 验证、推理并完成最终回答
 ```text
 duhai-vision/
 ├─ README.md
+├─ package.json
+├─ cordis.patch.yml
+├─ dsh/
+│  ├─ index.js
+│  └─ index.test.mjs
 ├─ install.ps1
 ├─ uninstall.ps1
 ├─ assets/
@@ -263,6 +348,14 @@ duhai-vision/
 - 远程视觉服务会接收图片内容；涉及身份证件、地址、电话或未公开档案时，先脱敏或改用本地方案。
 
 ## 卸载
+
+从 DSH Web profile 卸载：
+
+```powershell
+dsh plugin --profile web remove duhai-vision
+```
+
+卸载 Codex Skill：
 
 先预览，不做任何删除：
 
@@ -293,13 +386,13 @@ python -m pip uninstall paddleocr
 
 ## ⭐ 为什么值得 Star
 
-这个技能来自真实的 Duhai Vision / Codex Native 对照实验，也会继续用于日常视觉工作流。
+这个项目来自真实的 Duhai Vision / Codex Native 对照实验，也会继续用于日常视觉工作流。
 
-- PaddleOCR、Qwen、Codex 或官方额度发生变化时，会持续更新路由和说明。
+- PaddleOCR、Qwen、Codex、DSH 或官方额度发生变化时，会持续更新路由和说明。
 - 新的文档、UI、图表和批量图片场景会逐步补充到技能与验证流程。
 - 路线失效、额度变化或解析问题都欢迎直接提交 Issue。
 
-Star 一下，下次需要给 Codex 更换视觉路线时能直接找到。⭐
+Star 一下，下次需要给 Codex 或 DSH 更换视觉路线时能直接找到。⭐
 
 ## License
 

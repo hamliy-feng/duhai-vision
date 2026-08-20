@@ -1,0 +1,7 @@
+- insert:
+    - id: duhai-vision
+      name: duhai-vision/dsh
+      config:
+        defaultProvider: paddle
+        paddleModel: PaddleOCR-VL-1.6
+        qwenModel: qwen3-vl-plus

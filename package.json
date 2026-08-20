@@ -1,0 +1,46 @@
+{
+  "name": "duhai-vision",
+  "version": "1.0.0",
+  "description": "PaddleOCR-VL-first visual model adapter for Codex and DeepSeek Harness",
+  "type": "module",
+  "main": "./dsh/index.js",
+  "exports": {
+    ".": "./dsh/index.js",
+    "./dsh": "./dsh/index.js"
+  },
+  "files": [
+    "dsh/index.js",
+    "cordis.patch.yml",
+    "skills/duhai-vision/scripts/paddle_extract.py",
+    "skills/duhai-vision/scripts/vlm_extract.mjs",
+    "requirements.txt",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "test": "node --test dsh/index.test.mjs",
+    "check": "node --check dsh/index.js && node --test dsh/index.test.mjs"
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hamliy-feng/duhai-vision.git"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "codex-skill",
+    "paddleocr-vl",
+    "qwen-vl",
+    "vision",
+    "ocr"
+  ],
+  "license": "MIT"
+}
