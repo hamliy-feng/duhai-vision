@@ -23,22 +23,18 @@ const QWEN_SCRIPT = path.join(
   "vlm_extract.mjs",
 );
 
-const QWEN_TASK_PATTERN =
-  /(?:\bui\b|界面|截图|照片|摄影|商品|产品图|开放场景|场景理解|物体|计数|颜色|外观|布局建议|设计评审)/iu;
-
 const TOOL_DESCRIPTION = [
   "Use Duhai Vision to inspect a local image before continuing reasoning.",
-  "Before calling, briefly tell the user which route fits: PaddleOCR-VL for documents, OCR, tables, formulas, seals, archives and dense layouts; Qwen for UI, photos, products, counting and open visual semantics.",
-  "Provider auto defaults to PaddleOCR-VL and switches to Qwen only when the question clearly matches general visual understanding.",
+  "Before calling, briefly tell the user that PaddleOCR-VL is the default first route and disclose its quota and token-observability boundary.",
+  "Provider auto always resolves to PaddleOCR-VL, including UI, photos, products, charts, counting and open visual semantics. Use Qwen only when explicitly requested or as a disclosed fallback after Paddle is unavailable.",
   "PaddleOCR-VL community service is page-metered and currently offers 3000 free pages per user per model each day; its SDK does not expose token usage.",
   "Use at most two Duhai Vision calls for one visual task unless the user explicitly asks for more.",
   "After the structured observation returns, continue analysis, verification and the final answer in DSH.",
 ].join(" ");
 
-export function routeProvider(question, requested = "auto", defaultProvider = "paddle") {
+export function routeProvider(question, requested = "auto", _defaultProvider = "paddle") {
   if (requested === "paddle" || requested === "qwen") return requested;
-  if (QWEN_TASK_PATTERN.test(String(question || ""))) return "qwen";
-  return defaultProvider === "qwen" ? "qwen" : "paddle";
+  return "paddle";
 }
 
 function routeNotice(provider) {
@@ -242,7 +238,7 @@ export function apply(ctx, config = {}) {
         provider: {
           type: "string",
           enum: ["auto", "paddle", "qwen"],
-          description: "auto uses Paddle by default and selects Qwen for general visual scenes.",
+          description: "auto always uses PaddleOCR-VL first; qwen requires an explicit override.",
         },
       },
       required: ["image", "question"],

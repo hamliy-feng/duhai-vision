@@ -189,8 +189,8 @@ $beginMarker
 
 - For every image, screenshot, PDF page, chart, table, UI capture, OCR, photo, or other visual-understanding task, use the `duhai-vision` skill before Codex built-in vision.
 - Before the first visual call in a task, briefly state the task type, selected provider, why it fits, the relevant quota, and whether provider Token usage is observable.
-- Default to PaddleOCR-VL for documents, OCR, historical material, tables, formulas, seals, and layout extraction. The current AI Studio community limit is 3000 pages per user per model per day and at most the first 100 pages of one file; tell the user that limits can change.
-- Prefer Qwen3-VL-Plus for UI, photos, products, charts, counting, fine-grained semantics, and open-ended visual understanding when it is configured and clearly better suited.
+- Use PaddleOCR-VL as the first route for every supported visual task, including documents, OCR, historical material, tables, formulas, seals, UI, photos, products, charts, counting, and open scenes. The current AI Studio community limit is 3000 pages per user per model per day and at most the first 100 pages of one file; tell the user that limits can change.
+- Do not auto-route to Qwen from image type or prompt keywords. Use Qwen only when the user explicitly requests it or as a disclosed fallback after PaddleOCR-VL is unavailable.
 - Keep Codex as the reasoning and orchestration layer. Treat external visual output as observations, preserve uncertainty, and verify high-impact claims when another source exists.
 - Use Codex built-in vision only when external providers fail, are unavailable, privacy requires another route, or the user explicitly asks for native vision. State the fallback and reason.
 - Read credentials from environment variables only. Never put API keys or access tokens in files, prompts, logs, or repository content.

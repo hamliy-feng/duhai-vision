@@ -22,7 +22,7 @@
 - 📤 “图片任务怎样交给视觉模型” → **按问题式 JSON 发送并等待结构化回调**
 - 🔁 “视觉结果返回后怎么办” → **交回 Codex 或 DSH 继续推理、验证和回答**
 - 📄 “帮我读文档、表格、古籍或报刊” → **默认优先 PaddleOCR-VL**
-- 🖼️ “帮我看 UI、照片、商品或开放场景” → **按任务切换 Qwen**
+- 🖼️ “帮我看 UI、照片、商品或开放场景” → **仍先使用 PaddleOCR-VL，必要时再显式切换 Qwen**
 - 🎁 “每天有多少免费额度” → **每位用户、每个模型当前 3000 页，以[官方规则](https://ai.baidu.com/ai-doc/AISTUDIO/Xmjclapam)为准**
 
 ## 测试结果
@@ -78,7 +78,7 @@ Codex 与 DSH 在批量 OCR、长文档和可重复视觉任务里，需要明�
 - **双端适配**：Codex 使用全局 Skill 路由；DSH 使用模型可调用的 `duhai_vision` 工具。
 - **先说明再调用**：每个任务先简要说明任务类型、推荐路线、限额与 Token 可观测性。
 - **Paddle 默认**：适合古籍、侨批、表格、公式、印章、版面和长文档。
-- **Qwen 后备**：适合 UI、照片、商品、细粒度语义和开放式视觉理解。
+- **Qwen 后备**：仅在用户明确指定，或 PaddleOCR-VL 不可用且需要语义后备时启用。
 - **可审计**：保留提供方、模型、耗时、页数和可获得的 Token 数据，不把未知值写成 0。
 - **有边界的回退**：外部路线不可用或用户明确指定时，才使用 Codex Native，并说明原因。
 
@@ -91,7 +91,7 @@ Codex 与 DSH 在批量 OCR、长文档和可重复视觉任务里，需要明�
 | 图片入口 | 图片直接进入 Codex 内置视觉通道 | 本地 Agent 先调用 Duhai Vision，再由 PaddleOCR-VL 解析 |
 | 返回给 Agent 的内容 | 内置视觉上下文 | 结构化 JSON、正文、版面、表格、公式、印章与不确定项 |
 | 默认适用范围 | 通用图片理解与外部路线回退 | 文档 OCR、古籍、侨批、报刊、表格、公式和复杂版面 |
-| 视觉模型 | 由 Codex Native 提供 | PaddleOCR-VL 1.6，可按任务切换 Qwen |
+| 视觉模型 | 由 Codex Native 提供 | PaddleOCR-VL 1.6 默认优先；Qwen 仅显式选择或失败后备 |
 | 调用与额度 | 计入 Codex 图片输入上下文 | Paddle 社区服务当前每用户、每模型每天 3000 页免费额度 |
 | 可替换性 | 使用 Codex 内置入口 | 提供方、模型与路由规则均可替换 |
 | 可审计性 | 由 Codex 会话统一承载 | 明确记录提供方、模型、页数、耗时、结果与不确定项 |
@@ -168,7 +168,7 @@ dsh plugin --profile web add github:hamliy-feng/duhai-vision
 dsh web
 ```
 
-安装后，DSH 会获得模型工具 `duhai_vision`。工具接收本地图片路径、视觉问题和可选提供方；`auto` 默认使用 PaddleOCR-VL，UI、照片、商品、计数和开放场景自动选择 Qwen。
+安装后，DSH 会获得模型工具 `duhai_vision`。工具接收本地图片路径、视觉问题和可选提供方；`auto` 对所有支持的视觉任务均先使用 PaddleOCR-VL，不会因为 UI、照片、商品或开放场景关键词自动切换 Qwen。
 
 从本地仓库安装：
 
@@ -228,7 +228,7 @@ cd .\duhai-vision-main
 | 项目 | 默认行为 |
 |---|---|
 | 默认路线 | PaddleOCR-VL 1.6，优先处理文档、OCR、表格、公式、印章与版面 |
-| 通用视觉 | 配置 Qwen 后，UI、照片、商品、计数和开放式语义可切换到 Qwen3-VL-Plus |
+| 通用视觉 | UI、照片、商品、计数和开放式语义仍先使用 PaddleOCR-VL；Qwen 只接受显式选择或失败后备 |
 | 全局范围 | 技能安装到 `~/.agents/skills`，路由规则写入 `~/.codex/AGENTS.md`，重启 Codex 后生效 |
 | 调用预算 | 每个视觉任务默认最多 2 次外部调用：一次主提取，一次重试、裁剪或定向验证 |
 | 隐私 | 远程提供方会收到图片；敏感材料应先脱敏，或不要走远程路线 |
@@ -278,7 +278,7 @@ python .\skills\duhai-vision\scripts\doctor.py
 | 路线 | 适合任务 | 默认行为 | 使用提示 |
 |---|---|---|---|
 | PaddleOCR-VL 1.6 | 文档 OCR、古籍、侨批、表格、公式、印章、版面 | 默认 | AI Studio 社区服务当前按模型提供每日页数额度；SDK 响应不暴露 Token usage |
-| Qwen3-VL-Plus | UI、照片、商品、图表、计数、开放式语义 | 明显更适合时切换 | 需要 DashScope API Key；额度与费用以百炼控制台为准 |
+| Qwen3-VL-Plus | Paddle 不可用后的语义后备，或用户明确指定 | 不自动选择 | 需要 DashScope API Key；额度与费用以百炼控制台为准 |
 | Codex Native | 外部路线均不可用，或用户明确指定 | 仅回退 | 使用时必须说明已发生回退及原因 |
 
 Paddle 官方当前公开限制包括：每用户、每模型每天 3000 页，建议单文件不超过 100 页，超出部分只处理前 100 页。规则可能调整，使用前以[官方调用限制](https://ai.baidu.com/ai-doc/AISTUDIO/Xmjclapam)为准。
@@ -291,7 +291,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 `
   -ConfigureQwen
 ```
 
-安装器会以隐藏输入方式询问 DashScope API Key，默认提供方仍保持 Paddle。Duhai Vision 会在 UI、照片和通用视觉任务中推荐 Qwen，也可显式设置：
+安装器会以隐藏输入方式询问 DashScope API Key，默认提供方仍保持 Paddle。Duhai Vision 不会按任务关键词自动切换 Qwen；如确有需要，可由用户显式设置：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\install.ps1 -Apply -Provider qwen

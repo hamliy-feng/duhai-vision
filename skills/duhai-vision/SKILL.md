@@ -1,6 +1,6 @@
 ---
 name: duhai-vision
-description: Replace Codex built-in vision with Duhai Vision for images, screenshots, PDF pages, OCR, historical documents, tables, charts, UI captures, photos, contact sheets, and structured visual extraction. Default to PaddleOCR-VL for document tasks, use Qwen3-VL-Plus when general visual semantics fit better, and use Codex native vision only as an explicit fallback.
+description: Replace Codex built-in vision with a PaddleOCR-VL-first observation layer for images, screenshots, PDF pages, OCR, historical documents, tables, charts, UI captures, photos, contact sheets, and structured visual extraction. Use Qwen only when explicitly requested or as a disclosed fallback after Paddle is unavailable; use Codex native vision only as the final fallback.
 ---
 
 # Duhai Vision
@@ -18,17 +18,17 @@ Before the first visual call in each task, tell the user in one or two short sen
 
 Use these facts:
 
-- **PaddleOCR-VL**: default for OCR, documents, historical material, tables, formulas, seals, layout, and multi-page files. The current AI Studio community rule is 3000 pages per user per model per day and no more than the first 100 pages of one file. The SDK response does not expose Token usage. Say that official limits can change.
-- **Qwen3-VL-Plus**: preferred for UI, photos, products, charts, counting, fine-grained semantics, and open-ended visual understanding. Quota and price depend on the user's DashScope account; response usage should be recorded when returned.
+- **PaddleOCR-VL**: default first call for every supported visual task, including OCR, documents, historical material, tables, formulas, seals, layout, screenshots, UI, charts, photos, and multi-page files. The current AI Studio community rule is 3000 pages per user per model per day and no more than the first 100 pages of one file. The SDK response does not expose Token usage. Say that official limits can change.
+- **Qwen3-VL-Plus**: optional compatibility fallback only when the user explicitly selects it or Paddle is unavailable and a semantic second route is appropriate. Never select Qwen automatically from image type or prompt keywords. Quota and price depend on the user's DashScope account; record response usage when returned.
 - **Codex Native**: fallback only when external routes fail, are unavailable, are disallowed by privacy constraints, or the user explicitly requests native vision. State the fallback and reason.
 
 Do not repeat the disclosure for every image in the same task.
 
 ## Provider Decision
 
-1. Classify the task before opening the image.
-2. Default to PaddleOCR-VL unless the task is clearly a better fit for Qwen.
-3. Use `DUHAI_VISION_PROVIDER=paddle|qwen` as a user preference, but task fit may override it after disclosure.
+1. Classify the task before opening the image so the Paddle extraction prompt and verification schema fit the task.
+2. Use PaddleOCR-VL for the first call. Do not auto-route UI, photos, products, charts, counting, or open scenes to Qwen.
+3. Treat `DUHAI_VISION_PROVIDER=qwen` or an explicit `provider=qwen` request as an intentional override; otherwise `auto` resolves to Paddle.
 4. If the selected provider is not configured, point to [references/provider-setup.md](references/provider-setup.md) and use another configured Duhai provider when appropriate.
 5. Use at most two external visual calls per task by default: one primary extraction and one retry, crop, zoom, or targeted verification. More calls require a clear reason or user approval.
 
@@ -52,9 +52,9 @@ After extraction:
 4. If contextual restoration is allowed, include an explicit inference trace and confidence.
 5. Record page count, request count, model, latency, and Token observability.
 
-## Qwen Workflow
+## Optional Qwen Fallback
 
-Use `scripts/vlm_extract.mjs` for UI, photos, charts, general visual semantics, or a targeted second opinion:
+Use `scripts/vlm_extract.mjs` only when the user explicitly requests Qwen or after a disclosed Paddle failure where a semantic second route is appropriate:
 
 ```powershell
 node "$HOME\.agents\skills\duhai-vision\scripts\vlm_extract.mjs" `
@@ -103,7 +103,7 @@ Never turn unavailable Token data into zero. A free quota or zero bill is a bill
 ## Failure Handling
 
 1. Retry once only for transient failure, invalid JSON, or a targeted crop.
-2. If Paddle fails and Qwen is configured, disclose the route change and use Qwen when suitable.
+2. If Paddle fails and Qwen is configured, disclose the route change and use Qwen only when suitable; never make this switch silently.
 3. If Qwen fails and Paddle is suitable, disclose the route change and use Paddle.
 4. If both external routes are unavailable, disclose the failure and use Codex Native only when allowed.
 5. Preserve the failed provider, error category, attempt count, and any partial observation.

@@ -1,4 +1,4 @@
 interface:
   display_name: "Duhai Vision"
-  short_description: "Replace Codex vision with PaddleOCR-VL or Qwen."
-  default_prompt: "Use $duhai-vision to choose the best external visual route, disclose the route and quota briefly, then return verified structured observations."
+  short_description: "Use PaddleOCR-VL first for auditable visual extraction."
+  default_prompt: "Use $duhai-vision with PaddleOCR-VL first, disclose the quota briefly, and return verified structured observations."

@@ -6,11 +6,12 @@ import { apply, executeVision, routeProvider } from "./index.js";
 test("auto route keeps Paddle as the default", () => {
   assert.equal(routeProvider("识别这份侨批中的表格、印章和日期"), "paddle");
   assert.equal(routeProvider("Extract the text from this document"), "paddle");
+  assert.equal(routeProvider("Any image", "auto", "qwen"), "paddle");
 });
 
-test("auto route selects Qwen for general visual understanding", () => {
-  assert.equal(routeProvider("分析这个 UI 截图的布局问题"), "qwen");
-  assert.equal(routeProvider("数一下照片中有多少件商品"), "qwen");
+test("auto route keeps Paddle for general visual understanding", () => {
+  assert.equal(routeProvider("分析这个 UI 截图的布局问题"), "paddle");
+  assert.equal(routeProvider("数一下照片中有多少件商品"), "paddle");
 });
 
 test("explicit provider overrides routing", () => {
