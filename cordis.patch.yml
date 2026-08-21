@@ -5,3 +5,5 @@
         defaultProvider: paddle
         paddleModel: PaddleOCR-VL-1.6
         qwenModel: qwen3-vl-plus
+        targetProvider: deepseek-official
+        targetModel: deepseek-v4-flash

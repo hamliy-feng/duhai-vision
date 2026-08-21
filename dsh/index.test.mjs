@@ -21,10 +21,17 @@ test("explicit provider overrides routing", () => {
 
 test("plugin registers the duhai_vision tool", () => {
   let definition;
+  let adapterRoute;
   const ctx = {
     tools: {
       register(value) {
         definition = value;
+        return () => {};
+      },
+    },
+    llm: {
+      registerAdapter(routes) {
+        adapterRoute = routes;
         return () => {};
       },
     },
@@ -37,6 +44,7 @@ test("plugin registers the duhai_vision tool", () => {
     "paddle",
     "qwen",
   ]);
+  assert.deepEqual(adapterRoute, ["duhai-vision"]);
 });
 
 test("tool rejects empty visual requests before provider execution", async () => {

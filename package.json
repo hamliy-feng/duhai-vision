@@ -1,6 +1,6 @@
 {
   "name": "duhai-vision",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "PaddleOCR-VL-first visual model adapter for Codex and DeepSeek Harness",
   "type": "module",
   "main": "./dsh/index.js",

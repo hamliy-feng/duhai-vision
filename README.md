@@ -168,7 +168,12 @@ dsh plugin --profile web add github:hamliy-feng/duhai-vision
 dsh web
 ```
 
-安装后，DSH 会获得模型工具 `duhai_vision`。工具接收本地图片路径、视觉问题和可选提供方；`auto` 对所有支持的视觉任务均先使用 PaddleOCR-VL，不会因为 UI、照片、商品或开放场景关键词自动切换 Qwen。
+安装后，DSH 会获得：
+
+- `Duhai Vision · deepseek-v4-flash` 模型路由：可直接在对话框粘贴或上传图片。
+- `duhai_vision` 工具：可由 Agent 使用本地图片路径主动调用。
+
+对话框图片会先保存到 `~/.dsh/duhai-vision/attachments/` 的内容哈希路径，再由 PaddleOCR-VL 提取结构化观察，最后交给 DeepSeek 完成推理与回答。纯文字请求直接透传到 DeepSeek。`auto` 对所有支持的视觉任务均先使用 PaddleOCR-VL，不会因为 UI、照片、商品或开放场景关键词自动切换 Qwen。
 
 从本地仓库安装：
 
@@ -299,13 +304,19 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 -Apply -Provider qwen
 
 ## 使用方式
 
-安装完成后，像平常一样把图片交给 Codex，或告诉 DSH 图片路径：
+安装完成后，像平常一样把图片交给 Codex 或 DSH：
 
 ```text
 请转录这页侨批，保留繁体字、印章、不可读位置和推断依据。
 ```
 
-DSH 示例：
+DSH 对话框示例：
+
+```text
+粘贴或上传图片 → 选择 Duhai Vision · deepseek-v4-flash → 输入视觉问题 → 发送
+```
+
+DSH 本地路径示例：
 
 ```text
 使用 Duhai Vision 读取 C:\资料\page-001.jpg，转录正文、印章和表格，标记不确定项。

@@ -1,11 +1,11 @@
 import { spawn } from "node:child_process";
-import { access, mkdtemp, readFile, rm } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const name = "duhai-vision";
-export const inject = ["tools"];
+export const inject = ["tools", "llm", "attachments"];
 
 const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PADDLE_SCRIPT = path.join(
@@ -22,6 +22,15 @@ const QWEN_SCRIPT = path.join(
   "scripts",
   "vlm_extract.mjs",
 );
+const ADAPTER_PROVIDER = "duhai-vision";
+const DEFAULT_TARGET_PROVIDER = "deepseek-official";
+const DEFAULT_TARGET_MODEL = "deepseek-v4-flash";
+const MEDIA_EXTENSIONS = {
+  "image/png": ".png",
+  "image/jpeg": ".jpg",
+  "image/webp": ".webp",
+  "image/gif": ".gif",
+};
 
 const TOOL_DESCRIPTION = [
   "Use Duhai Vision to inspect a local image before continuing reasoning.",
@@ -146,6 +155,128 @@ async function runPaddle({ image, question, signal, config }) {
   }
 }
 
+function dshVisionDirectory(config = {}) {
+  return path.resolve(
+    config.attachmentDirectory ||
+      process.env.DUHAI_VISION_ATTACHMENT_DIR ||
+      path.join(process.env.DSH_HOME || path.join(os.homedir(), ".dsh"), "duhai-vision", "attachments"),
+  );
+}
+
+function attachmentDigest(ref) {
+  const value = String(ref?.attachmentId || "");
+  const match = /^sha256:([a-f0-9]{64})$/i.exec(value);
+  if (!match) throw new Error(`Unsupported DSH attachment id: ${value}`);
+  return match[1].toLowerCase();
+}
+
+async function stageAttachment(ctx, ref, config, signal) {
+  const stored = await ctx.attachments.readImage(ref, signal);
+  const directory = dshVisionDirectory(config);
+  const digest = attachmentDigest(stored.ref);
+  const extension = MEDIA_EXTENSIONS[stored.ref.mediaType] || ".img";
+  const imagePath = path.join(directory, `${digest}${extension}`);
+  await mkdir(directory, { recursive: true });
+  try {
+    await access(imagePath);
+  } catch {
+    await writeFile(imagePath, stored.data, { flag: "wx" });
+  }
+  return imagePath;
+}
+
+function userQuestion(message) {
+  return message.content
+    .filter((block) => block.type === "text")
+    .map((block) => block.text)
+    .join("\n")
+    .trim() || "完整识别图片中的文字、结构、数值、对象、布局与不确定内容。";
+}
+
+async function replaceMessageImages(ctx, message, config, cache, signal) {
+  if (!Array.isArray(message.content) || !message.content.some((block) => block.type === "image")) {
+    return message;
+  }
+  const question = userQuestion(message);
+  const content = [];
+  for (const block of message.content) {
+    if (block.type !== "image") {
+      content.push(block);
+      continue;
+    }
+    const key = `${block.attachment.attachmentId}\n${question}`;
+    let pending = cache.get(key);
+    if (!pending) {
+      pending = (async () => {
+        const imagePath = await stageAttachment(ctx, block.attachment, config, signal);
+        const result = await runPaddle({ image: imagePath, question, signal, config });
+        return { imagePath, result };
+      })();
+      cache.set(key, pending);
+      pending.catch(() => cache.delete(key));
+    }
+    const { imagePath, result } = await pending;
+    content.push({
+      type: "text",
+      text: [
+        "<duhai-vision-observation>",
+        `图片路径: ${imagePath}`,
+        `视觉提供方: ${result.provider || "paddle"}`,
+        `视觉模型: ${result.model || config.paddleModel || "PaddleOCR-VL-1.6"}`,
+        JSON.stringify(result, null, 2),
+        "</duhai-vision-observation>",
+      ].join("\n"),
+    });
+  }
+  return { ...message, content };
+}
+
+function createDuhaiAdapter(ctx, config) {
+  const cache = new Map();
+  const targetProvider = config.targetProvider || DEFAULT_TARGET_PROVIDER;
+  const targetModel = config.targetModel || DEFAULT_TARGET_MODEL;
+  return {
+    providerInfo(provider) {
+      return { id: provider, name: "Duhai Vision" };
+    },
+    providerRetryPolicy() {
+      return undefined;
+    },
+    async listModels() {
+      return [{
+        provider: ADAPTER_PROVIDER,
+        id: targetModel,
+        name: `Duhai Vision · ${targetModel}`,
+        description: "PaddleOCR-VL visual adapter with DeepSeek reasoning",
+        inputModalities: ["text", "image"],
+      }];
+    },
+    async resolveModel(provider, model, signal) {
+      const target = await ctx.llm.resolveModelInfo(targetProvider, targetModel, signal);
+      return {
+        ...target,
+        provider,
+        id: model,
+        name: `Duhai Vision · ${target.name || targetModel}`,
+        description: "PaddleOCR-VL visual adapter with DeepSeek reasoning",
+        inputModalities: ["text", "image"],
+      };
+    },
+    async *stream(options) {
+      const messages = [];
+      for (const message of options.messages) {
+        messages.push(await replaceMessageImages(ctx, message, config, cache, options.signal));
+      }
+      yield* ctx.llm.stream({
+        ...options,
+        provider: targetProvider,
+        model: targetModel,
+        messages,
+      });
+    },
+  };
+}
+
 async function runQwen({ image, question, signal, config }) {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "duhai-vision-"));
   const output = path.join(tempDir, "qwen-result.json");
@@ -263,4 +394,5 @@ export function apply(ctx, config = {}) {
       rawInput: args,
     }),
   });
+  ctx.llm.registerAdapter([ADAPTER_PROVIDER], createDuhaiAdapter(ctx, config));
 }
