@@ -126,7 +126,7 @@ def main() -> int:
     parser.add_argument("--model", default="PaddleOCR-VL-1.6")
     parser.add_argument(
         "--task-hint",
-        default="document OCR and structured layout extraction",
+        default="general visual understanding: people, buildings, objects, scenes, text and spatial relationships",
         help="Task context recorded in the result; it is not sent as a free-form model prompt.",
     )
     parser.add_argument("--access-token-env", default="PADDLEOCR_ACCESS_TOKEN")

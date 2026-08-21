@@ -15,7 +15,7 @@
     <a href="#卸载">卸载</a> ·
     <a href="#安全">安全</a>
   </p>
-  <p>🧩 Duhai Vision 是视觉模型适配器：Codex 或 DSH 将图片任务组织成问题式 JSON，等待视觉能力返回结构化结果后再继续分析。Codex 通过 Skill 启用全局视觉路由，DSH 通过 <code>duhai_vision</code> 工具调用同一套 PaddleOCR-VL / Qwen 执行器。当前文档与 OCR 默认优先使用 PaddleOCR-VL，AI Studio 当前为每位用户、每个模型提供每天 3000 页免费解析额度。</p>
+  <p>🧩 Duhai Vision 是通用视觉模型适配器：Codex 或 DSH 将人物、建筑、物体、场景、文档、UI 与图表等图片任务交给 PaddleOCR-VL 观察，再根据视觉证据完成回答、推理和验证。所有 <code>auto</code> 默认使用 PaddleOCR-VL；AI Studio 当前为每位用户、每个模型提供每天 3000 页免费解析额度。</p>
 </div>
 
 - 🧩 “不要使用固定的图片识别入口” → **切换为可替换的视觉模型适配器**
@@ -90,7 +90,7 @@ Codex 与 DSH 在批量 OCR、长文档和可重复视觉任务里，需要明�
 |---|---|---|
 | 图片入口 | 图片直接进入 Codex 内置视觉通道 | 本地 Agent 先调用 Duhai Vision，再由 PaddleOCR-VL 解析 |
 | 返回给 Agent 的内容 | 内置视觉上下文 | 结构化 JSON、正文、版面、表格、公式、印章与不确定项 |
-| 默认适用范围 | 通用图片理解与外部路线回退 | 文档 OCR、古籍、侨批、报刊、表格、公式和复杂版面 |
+| 默认适用范围 | 通用图片理解与外部路线回退 | 人物、建筑、物体、场景、照片、UI、图表、文档与 OCR |
 | 视觉模型 | 由 Codex Native 提供 | PaddleOCR-VL 1.6 默认优先；Qwen 仅显式选择或失败后备 |
 | 调用与额度 | 计入 Codex 图片输入上下文 | Paddle 社区服务当前每用户、每模型每天 3000 页免费额度 |
 | 可替换性 | 使用 Codex 内置入口 | 提供方、模型与路由规则均可替换 |
@@ -111,7 +111,7 @@ Duhai Vision
 ### Duhai Vision 的优化与贡献
 
 - **视觉能力解耦**：把图片识别从固定入口拆成可替换的视觉适配层，不改变 Codex 的推理与工具编排能力。
-- **文档路线优化**：默认把 OCR、古籍、侨批、报刊、表格、公式、印章和复杂版面交给 PaddleOCR-VL。
+- **通用视觉默认**：人物、建筑、物体、场景、照片、UI、图表、文档与 OCR 全部默认交给 PaddleOCR-VL。
 - **减少图片上下文占用**：先将图片转换为紧凑的结构化观察，再交回 Codex 分析；实验中的实际差异见上方 Test1 与 Test2。
 - **额度优先路由**：优先使用 Paddle 当前每日 3000 页免费额度，并在调用前说明页数限制与 Token 可观测边界。
 - **统一双端能力**：同一仓库同时服务 Codex Skill 与 DSH Plugin，两端复用相同的路由、执行器和返回结构。
@@ -232,7 +232,7 @@ cd .\duhai-vision-main
 
 | 项目 | 默认行为 |
 |---|---|
-| 默认路线 | PaddleOCR-VL 1.6，优先处理文档、OCR、表格、公式、印章与版面 |
+| 默认路线 | PaddleOCR-VL 1.6，处理人物、建筑、物体、场景、UI、图表、文档与 OCR |
 | 通用视觉 | UI、照片、商品、计数和开放式语义仍先使用 PaddleOCR-VL；Qwen 只接受显式选择或失败后备 |
 | 全局范围 | 技能安装到 `~/.agents/skills`，路由规则写入 `~/.codex/AGENTS.md`，重启 Codex 后生效 |
 | 调用预算 | 每个视觉任务默认最多 2 次外部调用：一次主提取，一次重试、裁剪或定向验证 |
@@ -282,7 +282,7 @@ python .\skills\duhai-vision\scripts\doctor.py
 
 | 路线 | 适合任务 | 默认行为 | 使用提示 |
 |---|---|---|---|
-| PaddleOCR-VL 1.6 | 文档 OCR、古籍、侨批、表格、公式、印章、版面 | 默认 | AI Studio 社区服务当前按模型提供每日页数额度；SDK 响应不暴露 Token usage |
+| PaddleOCR-VL 1.6 | 通用视觉入口：人物、建筑、物体、场景、UI、图表、文档、OCR 与复杂版面 | 默认 | AI Studio 社区服务当前按模型提供每日页数额度；SDK 响应不暴露 Token usage |
 | Qwen3-VL-Plus | Paddle 不可用后的语义后备，或用户明确指定 | 不自动选择 | 需要 DashScope API Key；额度与费用以百炼控制台为准 |
 | Codex Native | 外部路线均不可用，或用户明确指定 | 仅回退 | 使用时必须说明已发生回退及原因 |
 
@@ -354,7 +354,7 @@ Duhai Vision 是视觉观察层，不是最终真相，也不是另一个聊天�
 ```text
 图片 / PDF / 截图
         ↓
-PaddleOCR-VL（默认）或 Qwen（通用视觉）
+PaddleOCR-VL（默认通用视觉）或 Qwen（显式后备）
         ↓
 结构化观察 + 不确定项 + 可观测 usage
         ↓

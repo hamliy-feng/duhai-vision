@@ -1,6 +1,6 @@
 ---
 name: duhai-vision
-description: Replace Codex built-in vision with a PaddleOCR-VL-first observation layer for images, screenshots, PDF pages, OCR, historical documents, tables, charts, UI captures, photos, contact sheets, and structured visual extraction. Use Qwen only when explicitly requested or as a disclosed fallback after Paddle is unavailable; use Codex native vision only as the final fallback.
+description: Replace Codex built-in vision with a PaddleOCR-VL-first general visual observation layer for people, buildings, objects, scenes, photos, screenshots, UI, charts, documents, OCR, PDF pages, tables, and contact sheets. Use Qwen only when explicitly requested or as a disclosed fallback after Paddle is unavailable; use Codex native vision only as the final fallback.
 ---
 
 # Duhai Vision
@@ -18,7 +18,7 @@ Before the first visual call in each task, tell the user in one or two short sen
 
 Use these facts:
 
-- **PaddleOCR-VL**: default first call for every supported visual task, including OCR, documents, historical material, tables, formulas, seals, layout, screenshots, UI, charts, photos, and multi-page files. The current AI Studio community rule is 3000 pages per user per model per day and no more than the first 100 pages of one file. The SDK response does not expose Token usage. Say that official limits can change.
+- **PaddleOCR-VL**: general visual default for every supported image task, including people, buildings, objects, actions, natural scenes, OCR, documents, historical material, tables, formulas, seals, layout, screenshots, UI, charts, photos, and multi-page files. The current AI Studio community rule is 3000 pages per user per model per day and no more than the first 100 pages of one file. The SDK response does not expose Token usage. Say that official limits can change.
 - **Qwen3-VL-Plus**: optional compatibility fallback only when the user explicitly selects it or Paddle is unavailable and a semantic second route is appropriate. Never select Qwen automatically from image type or prompt keywords. Quota and price depend on the user's DashScope account; record response usage when returned.
 - **Codex Native**: fallback only when external routes fail, are unavailable, are disallowed by privacy constraints, or the user explicitly requests native vision. State the fallback and reason.
 
@@ -26,15 +26,15 @@ Do not repeat the disclosure for every image in the same task.
 
 ## Provider Decision
 
-1. Classify the task before opening the image so the Paddle extraction prompt and verification schema fit the task.
+1. Classify the task before opening the image so the observation and verification schema fit normal visual questions as well as structured extraction.
 2. Use PaddleOCR-VL for the first call. Do not auto-route UI, photos, products, charts, counting, or open scenes to Qwen.
 3. Treat `DUHAI_VISION_PROVIDER=qwen` or an explicit `provider=qwen` request as an intentional override; otherwise `auto` resolves to Paddle.
 4. If the selected provider is not configured, point to [references/provider-setup.md](references/provider-setup.md) and use another configured Duhai provider when appropriate.
 5. Use at most two external visual calls per task by default: one primary extraction and one retry, crop, zoom, or targeted verification. More calls require a clear reason or user approval.
 
-## PaddleOCR-VL Default Workflow
+## PaddleOCR-VL General Visual Workflow
 
-Use `scripts/paddle_extract.py` for one or more document images:
+Use `scripts/paddle_extract.py` for one or more images:
 
 ```powershell
 python "$HOME\.agents\skills\duhai-vision\scripts\paddle_extract.py" `
@@ -42,11 +42,11 @@ python "$HOME\.agents\skills\duhai-vision\scripts\paddle_extract.py" `
   --out ".agent_index\page-001.paddle.json"
 ```
 
-The script reads `PADDLEOCR_ACCESS_TOKEN`, calls the official `PaddleOCR-VL-1.6` API through the PaddleOCR SDK, and returns text, layout, table, chart, formula, and seal observations when available. It intentionally excludes rendered or base64 image payloads.
+The script reads `PADDLEOCR_ACCESS_TOKEN`, calls the official `PaddleOCR-VL-1.6` API through the PaddleOCR SDK, and returns the available visual evidence, including visible text, regions, layout, tables, charts, formulas and seals. The official hosted route is a document-parsing API rather than a free-form VQA endpoint, so the user question is answered by Codex from the returned evidence. Do not limit the final answer to OCR when the user asks about a person, building, object, action or scene; do not invent details absent from the evidence. The script intentionally excludes rendered or base64 image payloads.
 
 After extraction:
 
-1. Convert provider observations into the user's requested schema.
+1. Answer the user's actual visual question from the provider observations; use a schema only when the task asks for one.
 2. Preserve visible text separately from inferred text.
 3. Mark unreadable or uncertain areas; never silently invent content.
 4. If contextual restoration is allowed, include an explicit inference trace and confidence.

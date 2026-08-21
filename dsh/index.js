@@ -33,9 +33,9 @@ const MEDIA_EXTENSIONS = {
 };
 
 const TOOL_DESCRIPTION = [
-  "Use Duhai Vision to inspect a local image before continuing reasoning.",
+  "Use Duhai Vision as the general visual observation adapter for any local image before continuing reasoning.",
   "Before calling, briefly tell the user that PaddleOCR-VL is the default first route and disclose its quota and token-observability boundary.",
-  "Provider auto always resolves to PaddleOCR-VL, including UI, photos, products, charts, counting and open visual semantics. Use Qwen only when explicitly requested or as a disclosed fallback after Paddle is unavailable.",
+  "Provider auto always resolves to PaddleOCR-VL for documents, buildings, people, objects, natural scenes, UI, photos, products, charts, counting and open visual questions. Treat its output as visual evidence and answer the user's normal VLM question in DSH. Use Qwen only when explicitly requested or as a disclosed fallback after Paddle is unavailable.",
   "PaddleOCR-VL community service is page-metered and currently offers 3000 free pages per user per model each day; its SDK does not expose token usage.",
   "Use at most two Duhai Vision calls for one visual task unless the user explicitly asks for more.",
   "After the structured observation returns, continue analysis, verification and the final answer in DSH.",
@@ -50,7 +50,7 @@ function routeNotice(provider) {
   if (provider === "qwen") {
     return "通用视觉任务使用 Qwen；额度、并发和费用以 DashScope 控制台为准。结果返回后由 DSH 继续推理与验证。";
   }
-  return "文档与 OCR 任务默认使用 PaddleOCR-VL；社区服务当前按每用户、每模型每天 3000 页计，SDK 不返回 Token usage。结果返回后由 DSH 继续推理与验证。";
+  return "通用视觉任务默认使用 PaddleOCR-VL；适用于文档、建筑、人物、物体、场景、UI 与图表等图片。社区服务当前按每用户、每模型每天 3000 页计，SDK 不返回 Token usage。结果返回后由 DSH 继续回答、推理与验证。";
 }
 
 function processError(command, args, code, stderr) {
@@ -190,7 +190,7 @@ function userQuestion(message) {
     .filter((block) => block.type === "text")
     .map((block) => block.text)
     .join("\n")
-    .trim() || "完整识别图片中的文字、结构、数值、对象、布局与不确定内容。";
+    .trim() || "完整观察图片中的人物、建筑、物体、动作、环境、文字、数值、空间关系、布局与不确定内容。";
 }
 
 async function replaceMessageImages(ctx, message, config, cache, signal) {
@@ -223,6 +223,8 @@ async function replaceMessageImages(ctx, message, config, cache, signal) {
         `图片路径: ${imagePath}`,
         `视觉提供方: ${result.provider || "paddle"}`,
         `视觉模型: ${result.model || config.paddleModel || "PaddleOCR-VL-1.6"}`,
+        `用户视觉问题: ${question}`,
+        "请将以下 PaddleOCR-VL 结果作为视觉证据，直接回答用户关于人物、建筑、物体、场景、文字或布局的正常视觉问题；不要把回答限制为 OCR 转录。证据不足的属性必须标记为不确定。",
         JSON.stringify(result, null, 2),
         "</duhai-vision-observation>",
       ].join("\n"),
@@ -247,7 +249,7 @@ function createDuhaiAdapter(ctx, config) {
         provider: ADAPTER_PROVIDER,
         id: targetModel,
         name: `Duhai Vision · ${targetModel}`,
-        description: "PaddleOCR-VL visual adapter with DeepSeek reasoning",
+        description: "General visual adapter: PaddleOCR-VL observation with DeepSeek reasoning",
         inputModalities: ["text", "image"],
       }];
     },
@@ -258,7 +260,7 @@ function createDuhaiAdapter(ctx, config) {
         provider,
         id: model,
         name: `Duhai Vision · ${target.name || targetModel}`,
-        description: "PaddleOCR-VL visual adapter with DeepSeek reasoning",
+        description: "General visual adapter: PaddleOCR-VL observation with DeepSeek reasoning",
         inputModalities: ["text", "image"],
       };
     },

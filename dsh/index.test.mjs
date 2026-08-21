@@ -12,6 +12,9 @@ test("auto route keeps Paddle as the default", () => {
 test("auto route keeps Paddle for general visual understanding", () => {
   assert.equal(routeProvider("分析这个 UI 截图的布局问题"), "paddle");
   assert.equal(routeProvider("数一下照片中有多少件商品"), "paddle");
+  assert.equal(routeProvider("这是什么建筑，属于什么风格"), "paddle");
+  assert.equal(routeProvider("描述人物的动作、衣着和周围环境"), "paddle");
+  assert.equal(routeProvider("What is happening in this street scene?"), "paddle");
 });
 
 test("explicit provider overrides routing", () => {
